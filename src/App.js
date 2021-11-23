@@ -1,43 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from "react";
 
-import Tasks from './components/Tasks/Tasks';
-import NewTask from './components/NewTask/NewTask';
+import Tasks from "./components/Tasks/Tasks";
+import NewTask from "./components/NewTask/NewTask";
+
+import useHttp from "./hooks/use-http";
 
 function App() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [tasks, setTasks] = useState([]);
 
-  const fetchTasks = async (taskText) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        'https://react-http-6b4a6.firebaseio.com/tasks.json'
-      );
+  // Anoter way is to put transformedTask into useEffect / Remove useCallback here / and call useHttp() with no arguments. In the custom hook the argument for data is put into the sendRequest and no dependencies will be needed anymore
+  const transformedTask = useCallback((tasksObj) => {
+    const loadedTasks = [];
 
-      if (!response.ok) {
-        throw new Error('Request failed!');
-      }
-
-      const data = await response.json();
-
-      const loadedTasks = [];
-
-      for (const taskKey in data) {
-        loadedTasks.push({ id: taskKey, text: data[taskKey].text });
-      }
-
-      setTasks(loadedTasks);
-    } catch (err) {
-      setError(err.message || 'Something went wrong!');
+    for (const taskKey in tasksObj) {
+      loadedTasks.push({ id: taskKey, text: tasksObj[taskKey].text });
     }
-    setIsLoading(false);
-  };
+    setTasks(loadedTasks);
+  }, []);
+
+  const httpData = useHttp(transformedTask);
+
+  const { isLoading, error, sendRequest: fetchTasks } = httpData;
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    fetchTasks({ url: "https://react-movies-3ebe6-default-rtdb.firebaseio.com/tasks.json"});
+  }, [fetchTasks]);
 
   const taskAddHandler = (task) => {
     setTasks((prevTasks) => prevTasks.concat(task));
