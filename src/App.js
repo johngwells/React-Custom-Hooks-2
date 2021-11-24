@@ -8,22 +8,22 @@ import useHttp from "./hooks/use-http";
 function App() {
   const [tasks, setTasks] = useState([]);
 
-  // Anoter way is to put transformedTask into useEffect / Remove useCallback here / and call useHttp() with no arguments. In the custom hook the argument for data is put into the sendRequest and no dependencies will be needed anymore
-  const transformedTask = useCallback((tasksObj) => {
-    const loadedTasks = [];
-
-    for (const taskKey in tasksObj) {
-      loadedTasks.push({ id: taskKey, text: tasksObj[taskKey].text });
-    }
-    setTasks(loadedTasks);
-  }, []);
-
-  const httpData = useHttp(transformedTask);
-
-  const { isLoading, error, sendRequest: fetchTasks } = httpData;
-
+  // Another way is to put transformedTask into useEffect / Remove useCallback here / and call useHttp() with no arguments. In the custom hook the argument for data is put into the sendRequest and no dependencies will be needed anymore
+  const { isLoading, error, sendRequest: fetchTasks } = useHttp();
   useEffect(() => {
-    fetchTasks({ url: "https://react-movies-3ebe6-default-rtdb.firebaseio.com/tasks.json"});
+    const transformedTask = (tasksObj) => {
+      const loadedTasks = [];
+
+      for (const taskKey in tasksObj) {
+        loadedTasks.push({ id: taskKey, text: tasksObj[taskKey].text });
+      }
+      console.log(loadedTasks);
+      setTasks(loadedTasks);
+    };
+
+    fetchTasks({
+      url: "https://react-movies-3ebe6-default-rtdb.firebaseio.com/tasks.json"
+    }, transformedTask);
   }, [fetchTasks]);
 
   const taskAddHandler = (task) => {
